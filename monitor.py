@@ -1,57 +1,62 @@
 
-#	TODO: Run to find the optimal TTL
-#	TODO: Run to find the optimal delay - catch error 529
-#	Refreshing the page gives the same error!
+"""Monitor university's course registeration website for vacancies"""
 
-#	Pre-requisites: lxml, requests
+
 import time
 import sys
 import os
 import requests
 from lxml import html
-from configs import USERNAME, PASSWORD, COURSE_NUMBERS, LOOP, REFRESH_RATE, \
+from configs import USERNAME, PASSWORD, COURSE_NUMBERS, REFRESH_RATE, \
     STOP_ON_SUCCESS, BEEP_ON_SUCCESS, TTL
 
 TARGET_URL = 'https://ug3.technion.ac.il/rishum/vacancy'
 LOGOUT_URL = 'https://ug3.technion.ac.il/rishum/logout'
 LOGIN_URL = 'https://ug3.technion.ac.il/rishum/login'
 
-#	Login - POST Request
-session_requests = requests.session()
-payload = {
-    'OP': 'LI',
-    'UID': USERNAME,
-    'PWD': PASSWORD
-}
-response = session_requests.post(LOGIN_URL, payload)
-response.raise_for_status()
+
+def login(session):
+    """Login to the university's course registeration website"""
+    response = session.get(LOGIN_URL)
+    response.raise_for_status()
+    login_form = html.fromstring(response.content).forms[0]
+    payload = dict(login_form.fields)
+    payload['UID'] = USERNAME
+    payload['PWD'] = PASSWORD
+    response = session.post(LOGIN_URL, payload)
 
 
-# while True:
-#	Load target page(s)
-for course_number in COURSE_NUMBERS:
+def query(session, course_number):
+    """Query and display total number of vacancies for a specific course"""
     course_url = TARGET_URL + '/' + course_number
-    response = session_requests.get(course_url)
+    response = session.get(course_url)
     response.raise_for_status()
     course_html = html.fromstring(response.content)
-    vacancie = course_html.find_class('label label-success')
+    vacancie_list = course_html.find_class('label label-success')
     vacancies = 0
-    for v in vacancie:
-        vacancies = vacancies + int(v.text)
+    for vacancy in vacancie_list:
+        vacancies = vacancies + int(vacancy.text)
     print 'Total vacancies in ' + course_number + ': ' + str(vacancies)
     if vacancies > 0:
         if BEEP_ON_SUCCESS:
             print '\a'  # cross-platform beep
         if STOP_ON_SUCCESS:
             exit(0)
-if (not LOOP) or (TTL <= 0):
-    # break
-    pass
-TTL = TTL - 1
-time.sleep(float(REFRESH_RATE))
-print TTL
-# os.system('cls' if os.name == 'nt' else 'clear')	# cross-platform clear screen
 
-#	Logout
-response = session_requests.get(LOGOUT_URL)
-response.raise_for_status()
+
+def logout(session):
+    """Logout from the university's course registeration website"""
+    response = session.get(LOGOUT_URL)
+    response.raise_for_status()
+
+
+SESSION = requests.session()
+login(SESSION)
+for rep in range(0, TTL):
+    for course_number in COURSE_NUMBERS:
+        query(SESSION, course_number)
+        print rep
+        time.sleep(float(REFRESH_RATE))
+        # cross-platform clear screen
+        os.system('cls' if os.name == 'nt' else 'clear')
+logout(SESSION)
