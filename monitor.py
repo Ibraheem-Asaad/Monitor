@@ -1,7 +1,7 @@
 
-#	Summary:
-#	Failed to make a connection due to server overload
-
+#	TODO: Run to find the optimal TTL
+#	TODO: Run to find the optimal delay - catch error 529
+#	Refreshing the page gives the same error!
 
 #	Pre-requisites: lxml, requests
 from lxml import html
@@ -9,36 +9,13 @@ import requests
 import time
 import sys
 import os
-
-# TODO: delete me
-import codecs
-def output_response_webpage(response, name):
-	webpage_name = name + '.html'
-	with codecs.open(webpage_name, 'w', response.encoding) as out:
-		out.write(response.text)
-
-def parse_argv(args, single_args_list):
-	arg_flag = dict()
-	
-	for arg in single_args_list:
-		arg_string = '-' + arg
-		if arg_string in args:
-			arg_flag[arg] = True
-			args.remove(arg_string)
-		else:
-			arg_flag[arg] = False
-	
-	return args, arg_flag
+#	Configs: username, password, course_numbers, loop, refresh_rate, stop_on_success, beep_on_success, ttl
+from configs import *
 
 
-sys.argv, arg_flag = parse_argv(sys.argv, ['loop'])
-
-#	Configs
-from credentials import username, password, course_numbers
-
-login_url = 'https://ug3.technion.ac.il/rishum/login'
-logout_url = 'https://ug3.technion.ac.il/rishum/logout'
 target_url = 'https://ug3.technion.ac.il/rishum/vacancy'
+logout_url = 'https://ug3.technion.ac.il/rishum/logout'
+login_url = 'https://ug3.technion.ac.il/rishum/login'
 
 #	Login - POST Request
 session_requests = requests.session()
@@ -50,31 +27,36 @@ payload = {
 response = session_requests.post(login_url, payload)
 response.raise_for_status()
 
-loop = True
 
-while loop:
+while True:
 	#	Load target page(s)
 	for course_number in course_numbers:
 		
 		course_url = target_url + '/' + course_number
 		response = session_requests.get(course_url)
-		output_response_webpage(response,'target')
 		response.raise_for_status()
 		
-		html_target = html.fromstring(response.content)
-		vacancie = html_target.find_class('label label-success')
+		course_html = html.fromstring(response.content)
+		vacancie = course_html.find_class('label label-success')
 		
 		vacancies = 0
 		for v in vacancie:
 			vacancies = vacancies + int(v.text)
 		print('Total vacancies in ' + course_number + ': ' + str(vacancies))
 		if vacancies > 0:
-			print '\a' # Beep
-		loop = arg_flag['loop']
-	
-	time.sleep(5)
-	os.system('cls' if os.name == 'nt' else 'clear')
+			if beep_on_success:
+				print '\a'	# cross-platform beep
+			if stop_on_success:
+				exit(0)
+		
+	if (not loop) or (ttl <= 0):
+		break
+		
+	ttl = ttl - 1
+	time.sleep(float(refresh_rate))
+	print(ttl)
+	#os.system('cls' if os.name == 'nt' else 'clear')	# cross-platform clear screen
 
 #	Logout
-response = session_requests.post(logout_url, payload)
+response = session_requests.get(logout_url)
 response.raise_for_status()
