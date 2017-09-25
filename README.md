@@ -8,7 +8,7 @@ Quick check or busywait for the course to be vacant and beep when a spot is avai
 
 
 
-##### Future Plans:
+#### Future Plans:
 
 Find the optimal TTL
 
