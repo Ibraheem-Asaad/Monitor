@@ -4,59 +4,54 @@
 #	Refreshing the page gives the same error!
 
 #	Pre-requisites: lxml, requests
-from lxml import html
-import requests
 import time
 import sys
 import os
-#	Configs: username, password, course_numbers, loop, refresh_rate, stop_on_success, beep_on_success, ttl
-from configs import *
+import requests
+from lxml import html
+from configs import USERNAME, PASSWORD, COURSE_NUMBERS, LOOP, REFRESH_RATE, \
+    STOP_ON_SUCCESS, BEEP_ON_SUCCESS, TTL
 
-
-target_url = 'https://ug3.technion.ac.il/rishum/vacancy'
-logout_url = 'https://ug3.technion.ac.il/rishum/logout'
-login_url = 'https://ug3.technion.ac.il/rishum/login'
+TARGET_URL = 'https://ug3.technion.ac.il/rishum/vacancy'
+LOGOUT_URL = 'https://ug3.technion.ac.il/rishum/logout'
+LOGIN_URL = 'https://ug3.technion.ac.il/rishum/login'
 
 #	Login - POST Request
 session_requests = requests.session()
 payload = {
-	'OP': 'LI',
-	'UID': username, 
-	'PWD': password
+    'OP': 'LI',
+    'UID': USERNAME,
+    'PWD': PASSWORD
 }
-response = session_requests.post(login_url, payload)
+response = session_requests.post(LOGIN_URL, payload)
 response.raise_for_status()
 
 
-while True:
-	#	Load target page(s)
-	for course_number in course_numbers:
-		
-		course_url = target_url + '/' + course_number
-		response = session_requests.get(course_url)
-		response.raise_for_status()
-		
-		course_html = html.fromstring(response.content)
-		vacancie = course_html.find_class('label label-success')
-		
-		vacancies = 0
-		for v in vacancie:
-			vacancies = vacancies + int(v.text)
-		print('Total vacancies in ' + course_number + ': ' + str(vacancies))
-		if vacancies > 0:
-			if beep_on_success:
-				print '\a'	# cross-platform beep
-			if stop_on_success:
-				exit(0)
-		
-	if (not loop) or (ttl <= 0):
-		break
-		
-	ttl = ttl - 1
-	time.sleep(float(refresh_rate))
-	print(ttl)
-	#os.system('cls' if os.name == 'nt' else 'clear')	# cross-platform clear screen
+# while True:
+#	Load target page(s)
+for course_number in COURSE_NUMBERS:
+    course_url = TARGET_URL + '/' + course_number
+    response = session_requests.get(course_url)
+    response.raise_for_status()
+    course_html = html.fromstring(response.content)
+    vacancie = course_html.find_class('label label-success')
+    vacancies = 0
+    for v in vacancie:
+        vacancies = vacancies + int(v.text)
+    print 'Total vacancies in ' + course_number + ': ' + str(vacancies)
+    if vacancies > 0:
+        if BEEP_ON_SUCCESS:
+            print '\a'  # cross-platform beep
+        if STOP_ON_SUCCESS:
+            exit(0)
+if (not LOOP) or (TTL <= 0):
+    # break
+    pass
+TTL = TTL - 1
+time.sleep(float(REFRESH_RATE))
+print TTL
+# os.system('cls' if os.name == 'nt' else 'clear')	# cross-platform clear screen
 
 #	Logout
-response = session_requests.get(logout_url)
+response = session_requests.get(LOGOUT_URL)
 response.raise_for_status()
