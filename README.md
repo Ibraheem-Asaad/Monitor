@@ -2,11 +2,17 @@
 
 ## Monitor online course registeration website
 
-Fetch total vacancies for a list of courses online (in the university's website - using web scraping).
+Checks for vacant spots (in the university's registeration website - using web scraping). 
 
-Quick check or busywait for the course to be vacant and beep when a spot is available.
+### Features:
 
+1) Allows authentication (using credentials)
 
+2) Quick check or busywait for the course to be vacant
+
+3) Prints the number of spots available
+
+3) Beep when a spot is available
 
 #### Future Plans:
 
@@ -15,5 +21,3 @@ Find the optimal TTL
 Find the optimal delay - catch error 529
 
 Check if refreshing the page online gives the same error
-
-Quick check or busywait for the course to be vacant and beep when a spot is available.
