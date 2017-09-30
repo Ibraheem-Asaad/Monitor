@@ -21,3 +21,7 @@ Find the optimal TTL
 Find the optimal delay - catch error 529
 
 Check if refreshing the page online gives the same error
+
+#### Used libraries:
+
+lxml, os, requests, sys, time
