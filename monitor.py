@@ -50,13 +50,14 @@ def logout(session):
     response.raise_for_status()
 
 
-SESSION = requests.session()
-login(SESSION)
-for rep in range(0, TTL):
-    for course_number in COURSE_NUMBERS:
-        query(SESSION, course_number)
-        print rep
-        time.sleep(float(REFRESH_RATE))
-        # cross-platform clear screen
-        os.system('cls' if os.name == 'nt' else 'clear')
-logout(SESSION)
+if __name__ == '__main__':
+    SESSION = requests.session()
+    login(SESSION)
+    for rep in range(0, TTL):
+        for course_number in COURSE_NUMBERS:
+            query(SESSION, course_number)
+            print rep
+            time.sleep(float(REFRESH_RATE))
+            # cross-platform clear screen
+            os.system('cls' if os.name == 'nt' else 'clear')
+    logout(SESSION)
